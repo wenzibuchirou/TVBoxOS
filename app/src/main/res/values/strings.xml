@@ -1,4 +1,4 @@
 <resources>
     <!--  app名称   -->
-    <string 名字="app_name">联通在线</string>
+    <string name="app_name">联通在线</string>
 </resources>
