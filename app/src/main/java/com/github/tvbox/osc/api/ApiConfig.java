@@ -50,45 +50,45 @@ import java.util.regex.Pattern;
  * @date :2020/12/18
  * @description:
  */
-公共 class ApiConfig {
-    私有 static ApiConfig instance;
-    私有 LinkedHashMap<String, SourceBean> sourceBeanList;
-    私有 SourceBean mHomeSource;
-    私有 ParseBean mDefaultParse;
-    私有 List<LiveChannelGroup> liveChannelGroupList;
-    私有 List<ParseBean> parseBeanList;
-    私有 List<String> vipParseFlags;
-    私有 List<IJKCode> ijkCodes;
-    私有 String spider = null;
-    公共 String wallpaper = "";
+public class ApiConfig {
+    private static ApiConfig instance;
+    private LinkedHashMap<String, SourceBean> sourceBeanList;
+    private SourceBean mHomeSource;
+    private ParseBean mDefaultParse;
+    private List<LiveChannelGroup> liveChannelGroupList;
+    private List<ParseBean> parseBeanList;
+    private List<String> vipParseFlags;
+    private List<IJKCode> ijkCodes;
+    private String spider = null;
+    public String wallpaper = "";
 
-    私有 SourceBean emptyHome = 新建 SourceBean();
+    private SourceBean emptyHome = new SourceBean();
 
-    私有 JarLoader jarLoader = 新建 JarLoader();
-    私有 JsLoader jsLoader = 新建 JsLoader();
+    private JarLoader jarLoader = new JarLoader();
+    private JsLoader jsLoader = new JsLoader();
 
-    私有 String userAgent = "okhttp/3.15";
+    private String userAgent = "okhttp/3.15";
 
-    私有 String requestAccept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9";
+    private String requestAccept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9";
 
-    私有 ApiConfig() {
-        sourceBeanList = 新建 LinkedHashMap<>();
-        liveChannelGroupList = 新建 ArrayList<>();
-        parseBeanList = 新建 ArrayList<>();
+    private ApiConfig() {
+        sourceBeanList = new LinkedHashMap<>();
+        liveChannelGroupList = new ArrayList<>();
+        parseBeanList = new ArrayList<>();
     }
 
-    公共 static ApiConfig get() {
+    public static ApiConfig get() {
         if (instance == null) {
             synchronized (ApiConfig.class) {
                 if (instance == null) {
-                    instance = 新建 ApiConfig();
+                    instance = new ApiConfig();
                 }
             }
         }
         return instance;
     }
 
-    公共 static String FindResult(String json, String configKey) {
+    public static String FindResult(String json, String configKey) {
         String content = json;
         try {
             if (AES.isJson(content)) return content;
@@ -96,12 +96,12 @@ import java.util.regex.Pattern;
             Matcher matcher = pattern.matcher(content);
             if(matcher.find()){
                 content=content.substring(content.indexOf(matcher.group()) + 10);
-                content = 新建 String(Base64.decode(content, Base64.DEFAULT));
+                content = new String(Base64.decode(content, Base64.DEFAULT));
             }
             if (content.startsWith("2423")) {
                 String data = content.substring(content.indexOf("2324") + 4, content.length() - 26);
-                content = 新建 String(AES.toBytes(content))。toLowerCase();
-                String 密钥 = AES.rightPadding(content.substring(content.indexOf("$#") + 2, content.indexOf("#$")), "0", 16);
+                content = new String(AES.toBytes(content)).toLowerCase();
+                String key = AES.rightPadding(content.substring(content.indexOf("$#") + 2, content.indexOf("#$")), "0", 16);
                 String iv = AES.rightPadding(content.substring(content.length() - 13), "0", 16);
                 json = AES.CBC(data, key, iv);
             }else if (configKey !=null && !AES.isJson(content)) {
@@ -116,27 +116,27 @@ import java.util.regex.Pattern;
         return json;
     }
 
-    私有 static byte[] getImgJar(String 内容){
+    private static byte[] getImgJar(String body){
         Pattern pattern = Pattern.compile("[A-Za-z0]{8}\\*\\*");
-        Matcher matcher = pattern.matcher(内容);
+        Matcher matcher = pattern.matcher(body);
         if(matcher.find()){
             body = body.substring(body.indexOf(matcher.group()) + 10);
             return Base64.decode(body, Base64.DEFAULT);
         }
-        return ""。getBytes();
+        return "".getBytes();
     }
 
-    公共 void loadConfig(boolean useCache, LoadConfigCallback callback, Activity activity) {
+    public void loadConfig(boolean useCache, LoadConfigCallback callback, Activity activity) {
         String apiUrl = Hawk.get(HawkConfig.API_URL, "https://agit.ai/wenzi1/bs1/raw/branch/master/lan1.json");
         if (apiUrl.isEmpty()) {
             callback.error("-1");
             return;
         }
-        File cache = 新建 File(App.getInstance()。getFilesDir()。getAbsolutePath() + "/" + MD5.encode(apiUrl));
+        File cache = new File(App.getInstance().getFilesDir().getAbsolutePath() + "/" + MD5.encode(apiUrl));
         if (useCache && cache.exists()) {
             try {
                 parseJson(apiUrl, cache);
-                callback.成功();
+                callback.success();
                 return;
             } catch (Throwable th) {
                 th.printStackTrace();
@@ -144,7 +144,7 @@ import java.util.regex.Pattern;
         }
         String TempKey = null, configUrl = "", pk = ";pk;";
         if (apiUrl.contains(pk)) {
-            String[] a = apiUrl.分屏(pk);
+            String[] a = apiUrl.split(pk);
             TempKey = a[1];
             if (apiUrl.startsWith("clan")){
                 configUrl = clanToAddress(a[0]);
@@ -162,28 +162,28 @@ import java.util.regex.Pattern;
         }
         String configKey = TempKey;
         OkGo.<String>get(configUrl)
-                。headers("User-Agent", userAgent)
-                。headers("Accept", requestAccept)
-                。execute(新建 AbsCallback<String>() {
+                .headers("User-Agent", userAgent)
+                .headers("Accept", requestAccept)
+                .execute(new AbsCallback<String>() {
                     @Override
-                    公共 void onSuccess(Response<String> response) {
+                    public void onSuccess(Response<String> response) {
                         try {
-                            String json = response.内容();
+                            String json = response.body();
                             parseJson(apiUrl, json);
                             try {
                                 File cacheDir = cache.getParentFile();
                                 if (!cacheDir.exists())
                                     cacheDir.mkdirs();
                                 if (cache.exists())
-                                    cache.删除();
-                                FileOutputStream fos = 新建 FileOutputStream(cache);
-                                fos.撰写(json.getBytes("UTF-8"));
+                                    cache.delete();
+                                FileOutputStream fos = new FileOutputStream(cache);
+                                fos.write(json.getBytes("UTF-8"));
                                 fos.flush();
                                 fos.close();
                             } catch (Throwable th) {
                                 th.printStackTrace();
                             }
-                            callback.成功();
+                            callback.success();
                         } catch (Throwable th) {
                             th.printStackTrace();
                             callback.error("解析配置失败");
@@ -191,26 +191,26 @@ import java.util.regex.Pattern;
                     }
 
                     @Override
-                    公共 void onError(Response<String> response) {
-                        super。onError(response);
+                    public void onError(Response<String> response) {
+                        super.onError(response);
                         if (cache.exists()) {
                             try {
                                 parseJson(apiUrl, cache);
-                                callback.成功();
+                                callback.success();
                                 return;
                             } catch (Throwable th) {
                                 th.printStackTrace();
                             }
                         }
-                        callback.error("拉取配置失败\n" + (response.getException() != null ? response.getException()。getMessage() : ""));
+                        callback.error("拉取配置失败\n" + (response.getException() != null ? response.getException().getMessage() : ""));
                     }
 
-                    公共 String convertResponse(okhttp3.Response response) throws Throwable {
+                    public String convertResponse(okhttp3.Response response) throws Throwable {
                         String result = "";
-                        if (response.内容() == null) {
+                        if (response.body() == null) {
                             result = "";
                         } else {
-                            result = FindResult(response.内容()。string(), configKey);
+                            result = FindResult(response.body().string(), configKey);
                         }
 
                         if (apiUrl.startsWith("clan")) {
@@ -224,16 +224,16 @@ import java.util.regex.Pattern;
     }
 
 
-    公共 void loadJar(boolean useCache, String spider, LoadConfigCallback callback) {
-        String[] urls = spider.分屏(";md5;");
+    public void loadJar(boolean useCache, String spider, LoadConfigCallback callback) {
+        String[] urls = spider.split(";md5;");
         String jarUrl = urls[0];
-        String md5 = urls.length > 1 ? urls[1]。trim() : "";
-        File cache = 新建 File(App.getInstance()。getFilesDir()。getAbsolutePath() + "/csp.jar");
+        String md5 = urls.length > 1 ? urls[1].trim() : "";
+        File cache = new File(App.getInstance().getFilesDir().getAbsolutePath() + "/csp.jar");
 
         if (!md5.isEmpty() || useCache) {
-            if (cache.exists() && (useCache || MD5.getFileMd5(cache)。equalsIgnoreCase(md5))) {
+            if (cache.exists() && (useCache || MD5.getFileMd5(cache).equalsIgnoreCase(md5))) {
                 if (jarLoader.load(cache.getAbsolutePath())) {
-                    callback.成功();
+                    callback.success();
                 } else {
                     callback.error("");
                 }
@@ -244,24 +244,24 @@ import java.util.regex.Pattern;
         boolean isJarInImg = jarUrl.startsWith("img+");
         jarUrl = jarUrl.replace("img+", "");
         OkGo.<File>get(jarUrl)
-                。headers("User-Agent", userAgent)
-                。headers("Accept", requestAccept)
-                。execute(新建 AbsCallback<File>() {
+                .headers("User-Agent", userAgent)
+                .headers("Accept", requestAccept)
+                .execute(new AbsCallback<File>() {
 
             @Override
-            公共 File convertResponse(okhttp3.Response response) throws Throwable {
+            public File convertResponse(okhttp3.Response response) throws Throwable {
                 File cacheDir = cache.getParentFile();
                 if (!cacheDir.exists())
                     cacheDir.mkdirs();
                 if (cache.exists())
-                    cache.删除();
-                FileOutputStream fos = 新建 FileOutputStream(cache);
+                    cache.delete();
+                FileOutputStream fos = new FileOutputStream(cache);
                 if(isJarInImg) {
-                    String respData = response.内容()。string();
+                    String respData = response.body().string();
                     byte[] imgJar = getImgJar(respData);
-                    fos.撰写(imgJar);
+                    fos.write(imgJar);
                 } else {
-                    fos.撰写(response.内容()。bytes());
+                    fos.write(response.body().bytes());
                 }
                 fos.flush();
                 fos.close();
@@ -269,10 +269,10 @@ import java.util.regex.Pattern;
             }
 
             @Override
-            公共 void onSuccess(Response<File> response) {
-                if (response.内容()。exists()) {
-                    if (jarLoader.load(response.内容()。getAbsolutePath())) {
-                        callback.成功();
+            public void onSuccess(Response<File> response) {
+                if (response.body().exists()) {
+                    if (jarLoader.load(response.body().getAbsolutePath())) {
+                        callback.success();
                     } else {
                         callback.error("");
                     }
@@ -282,7 +282,7 @@ import java.util.regex.Pattern;
             }
 
             @Override
-            公共 void onError(Response<File> response) {
+            public void onError(Response<File> response) {
                 super.onError(response);
                 callback.error("");
             }
