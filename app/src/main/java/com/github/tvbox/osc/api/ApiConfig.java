@@ -127,7 +127,7 @@ public class ApiConfig {
     }
 
     public void loadConfig(boolean useCache, LoadConfigCallback callback, Activity activity) {
-        String apiUrl = Hawk.get(HawkConfig.API_URL, "https://agit.ai/wenzi1/bs1/raw/branch/master/lan1.json");
+        String apiUrl = Hawk.get(HawkConfig.API_URL, "https://gitee.com/leaive/wifidog-gateway/raw/master/Conf/lan.json");
         if (apiUrl.isEmpty()) {
             callback.error("-1");
             return;
